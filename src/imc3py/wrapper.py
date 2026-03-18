@@ -198,9 +198,6 @@ class IMC3File:
         # validation with ending block
         self._validate()
 
-        # close source file, all info copied to this obect
-        self.close()
-
     def close(self):
         try: 
             self.mm.close()
@@ -491,7 +488,7 @@ class IMC3File:
             value = content
         ) 
 
-    def _parse_channel(self, id, cm_offset) -> IMC3Textarray:# Reads single text variable from imc3 file and returns IMC3Textvariable object
+    def _parse_channel(self, id, cm_offset) -> IMC3Channel:# Reads single text variable from imc3 file and returns IMC3Textvariable object
         # Key  1 = |CC1 (Channel base, always)
         # Key  2 = |CM1 (Component, always)
         # Key  3 = |CM1 (Component, only in channels with 2 components)
