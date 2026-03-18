@@ -586,21 +586,23 @@ class IMC3File:
         # 2) samples component 2 (optional)
         # 3) envelope (not implemented)
         # 4) events (not implemented)
+        offset  = self.rawOffset
+
         # vectorized reads with numpy
-        raw = np.frombuffer(self.mm, dtype=cmpFormat1['npformat'], count=numValues, offset=self.rawOffset)
+        raw = np.frombuffer(self.mm, dtype=cmpFormat1['npformat'], count=numValues, offset=offset)
         samples1 = raw * scaleFactor1 + scaleOffset1
-        self.rawOffset += numValues * cmpFormat1['bytes']
+        offset += numValues * cmpFormat1['bytes']
 
         if numComponents == 2:
             # vectorized reads with numpy
-            raw = np.frombuffer(self.mm, dtype=cmpFormat2['npformat'], count=numValues, offset=self.rawOffset)
+            raw = np.frombuffer(self.mm, dtype=cmpFormat2['npformat'], count=numValues, offset=offset)
             samples2 = raw * scaleFactor2 + scaleOffset2
-            self.rawOffset += numValues * cmpFormat2['bytes']
+            offset += numValues * cmpFormat2['bytes']
         else:
             samples2 = []
 
         # skip envelope information in data
-        self.rawOffset = self.rawOffset + uEnvelopeBytes
+        self.rawOffset = offset + uEnvelopeBytes
 
         return IMC3Channel(
             # from |CC1 key
