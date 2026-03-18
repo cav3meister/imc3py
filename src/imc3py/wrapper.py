@@ -29,19 +29,31 @@ UNIQUE_KEYS = ['|CB1', '|CL1', '|CO1', '|Cd1', '|CA1']
 COMPONENTCOMBINATION_2COMPONENTS = [2, 3, 4, 5, 6]
 
 NUMERICAL_FORMATS = {
-    1: {'format':'UINT8', 'bytes': 1},
-    2: {'format':'SINT8', 'bytes': 1},
-    3: {'format':'UINT16', 'bytes': 2},
-    4: {'format':'SINT16', 'bytes': 2},
-    5: {'format':'UINT32', 'bytes': 4},
-    6: {'format':'SINT32', 'bytes': 4},
-    7: {'format':'FLT', 'bytes': 4},
-    8: {'format':'DBL', 'bytes': 8},
-    10: {'format':'TSA', 'bytes': 6},
-    12: {'format':'UINT64', 'bytes': 8},
-    13: {'format':'UINT48', 'bytes': 6},
-    14: {'format':'SINT64', 'bytes': 8},
+    1: {'format':'UINT8', 'bytes': 1, 'npformat': 'uint8'},
+    2: {'format':'SINT8', 'bytes': 1, 'npformat': 'int8'},
+    3: {'format':'UINT16', 'bytes': 2, 'npformat': 'uint16'},
+    4: {'format':'SINT16', 'bytes': 2, 'npformat': 'int16'},
+    5: {'format':'UINT32', 'bytes': 4, 'npformat': 'uint32'},
+    6: {'format':'SINT32', 'bytes': 4, 'npformat': 'int32'},
+    7: {'format':'FLT', 'bytes': 4, 'npformat': 'float32'},
+    8: {'format':'DBL', 'bytes': 8, 'npformat': 'float64'},
+    10: {'format':'TSA', 'bytes': 6, 'npformat': ''},
+    12: {'format':'UINT64', 'bytes': 8, 'npformat': 'uint64'},
+    13: {'format':'UINT48', 'bytes': 6, 'npformat': ''},
+    14: {'format':'SINT64', 'bytes': 8, 'npformat': 'int64'},
 }
+
+MAPPING_FORMATS = {
+        'FLT': ('<f', 4),
+        'DBL': ('<d', 8),
+        'SINT8': ('<b', 1),
+        'SINT16': ('<h', 2),
+        'SINT32': ('<l', 4),
+        'UINT8': ('<B', 1),
+        'UINT16': ('<H', 2),
+        'UINT32': ('<I', 4),
+        'UINT64': ('<Q', 8),
+    }
 
 class IMC3Error(Exception):
     pass
@@ -577,16 +589,18 @@ class IMC3File:
         # 2) samples component 2 (optional)
         # 3) envelope (not implemented)
         # 4) events (not implemented)
-        samples1 = list()
-        for i in range(numValues):
-            samples1.append(mapData(self.mm, self.rawOffset, cmpFormat1['format']) * scaleFactor1 + scaleOffset1)
-            self.rawOffset = self.rawOffset + cmpFormat1['bytes']
+        # vectorized reads with numpy
+        raw = np.frombuffer(self.mm, dtype=cmpFormat1['npformat'], count=numValues, offset=self.rawOffset)
+        samples1 = raw * scaleFactor1 + scaleOffset1
+        self.rawOffset += numValues * cmpFormat1['bytes']
 
-        samples2 = list()
         if numComponents == 2:
-            for i in range(numValues):
-                samples2.append(mapData(self.mm, self.rawOffset, cmpFormat2['format']) * scaleFactor2 + scaleOffset2)
-                self.rawOffset = self.rawOffset + cmpFormat2['bytes']
+            # vectorized reads with numpy
+            raw = np.frombuffer(self.mm, dtype=cmpFormat2['npformat'], count=numValues, offset=self.rawOffset)
+            samples2 = raw * scaleFactor2 + scaleOffset2
+            self.rawOffset += numValues * cmpFormat2['bytes']
+        else:
+            samples2 = []
 
         # skip envelope information in data
         self.rawOffset = self.rawOffset + uEnvelopeBytes
@@ -843,34 +857,18 @@ def mapSingleValue(data, startIndex, numericalFormat):
             raise IMC3Error('Single value format "8 byte signed long" not defined yet.')
         case _:
             raise IMC3Error('Invalid format for single value')
-
-def mapData(data, startIndex, datatype, **kwargs):
-    # this function unpacks byte data of the given imc2 datatype from the raw data
-    strLen = kwargs.get('strLen', 0)
-    match datatype:
-        case 'FLT':
-            return struct.unpack('<f', data[startIndex:startIndex+4])[0]
-        case 'DBL':
-            return struct.unpack('<d', data[startIndex:startIndex+8])[0]
-        case 'SINT8':
-            raise IMC3Error('SINT8 not defined yet')
-        case 'SINT16':
-            return struct.unpack('<h', data[startIndex:startIndex+2])[0]
-        case 'SINT32':
-            raise IMC3Error('SINT32 not defined yet')
-        case 'UINT8':
-            return int(data[startIndex])
-        case 'UINT16':
-            return struct.unpack('<H', data[startIndex:startIndex+2])[0]
-        case 'UINT32':
-            return struct.unpack('<I', data[startIndex:startIndex+4])[0]
-        case 'UINT64':
-            return struct.unpack('<Q', data[startIndex:startIndex+8])[0]
-        case 'STR':
-            return bytes(data[startIndex:startIndex+strLen]).decode('utf-8')
-        case _:
-            raise IMC3Error('Invalid datatype')
     
+def mapData(data, start, dtype, *, strLen=None):
+    if dtype == "STR":
+        raw = data[start: start+strLen]
+        try:
+            return raw.decode("utf-8")
+        except UnicodeDecodeError:
+            return raw.decode("cp1252")
+
+    fmt, size = MAPPING_FORMATS[dtype]
+    return struct.unpack(fmt, data[start:start+size])[0]
+
 def isValidKey(input):
     # checks if key is in list VALID_KEYS
     if input in VALID_KEYS:

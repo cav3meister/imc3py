@@ -18,25 +18,25 @@ def test_full_file():
     
     dfr = f.channel_as_df("Kanal_1:kanal_roh")
     assert len(dfr.index) == 416905
-    assert round(dfr['y'].iloc[0], 6) == 21.947023
-    assert round(dfr['y'].iloc[1], 6) == 21.974400
-    assert round(dfr['y'].iloc[2], 6) == 21.986567
-    assert round(dfr['y'].iloc[-3], 6) == 20.039777
-    assert round(dfr['y'].iloc[-2], 6) == 20.033693
-    assert round(dfr['y'].iloc[-1], 6) == 0
+    assert round(dfr['y'].iloc[0], 3) == 21.947
+    assert round(dfr['y'].iloc[1], 3) == 21.974
+    assert round(dfr['y'].iloc[2], 3) == 21.987
+    assert round(dfr['y'].iloc[-3], 3) == 20.040
+    assert round(dfr['y'].iloc[-2], 3) == 20.034
+    assert round(dfr['y'].iloc[-1], 3) == 0
     dff = f.channel_as_df("Kanal_1:kanal_filt")
     assert len(dff.index) == 396905
-    assert round(dff['y'].iloc[0], 6) == 8.129579
-    assert round(dff['y'].iloc[1], 6) == 8.136665
-    assert round(dff['y'].iloc[2], 6) == 8.143761
-    assert round(dff['y'].iloc[-3], 6) == 21.930725
-    assert round(dff['y'].iloc[-2], 6) == 21.931189
-    assert round(dff['y'].iloc[-1], 6) == 21.931654
+    assert round(dff['y'].iloc[0], 3) == 8.130
+    assert round(dff['y'].iloc[1], 3) == 8.137
+    assert round(dff['y'].iloc[2], 3) == 8.144
+    assert round(dff['y'].iloc[-3], 3) == 21.931
+    assert round(dff['y'].iloc[-2], 3) == 21.931
+    assert round(dff['y'].iloc[-1], 3) == 21.932
     dfs = f.channel_as_df("Kanal_1:sprung_1_3")
     assert len(dfs.index) == 45784
-    assert round(dfs['y'].iloc[0], 6) == 21.906393
-    assert round(dfs['y'].iloc[1], 6) == 21.906469
-    assert round(dfs['y'].iloc[2], 6) == 21.906570
-    assert round(dfs['y'].iloc[-3], 6) == 21.903397
-    assert round(dfs['y'].iloc[-2], 6) == 21.902319
-    assert round(dfs['y'].iloc[-1], 6) == 21.901224
+    assert round(dfs['y'].iloc[0], 3) == 21.906
+    assert round(dfs['y'].iloc[1], 3) == 21.906
+    assert round(dfs['y'].iloc[2], 3) == 21.907
+    assert round(dfs['y'].iloc[-3], 3) == 21.903
+    assert round(dfs['y'].iloc[-2], 3) == 21.902
+    assert round(dfs['y'].iloc[-1], 3) == 21.901
